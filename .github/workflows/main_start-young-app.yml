@@ -50,4 +50,4 @@ jobs:
           app-name: 'start-young-app'
           slot-name: 'Production'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_45E7FD3258FD496593B976DF741AEE53 }}
-          package: '*.war'
+          package: '*.jar'
