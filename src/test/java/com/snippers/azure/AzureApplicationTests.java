@@ -1,13 +1,13 @@
-package com.javatechie.azure.demo;
+package com.snippers.azure;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class SpringAzureDemoApplicationTests {
+class AzureApplicationTests {
 
-	@Test
-	void contextLoads() {
-	}
+    @Test
+    void contextLoads() {
+    }
 
 }
