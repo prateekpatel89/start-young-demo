@@ -16,6 +16,7 @@ import com.snipers.azure.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -50,7 +51,8 @@ public class Controller {
 
     @Autowired
     private EntityMapper entityMapper;
-
+    
+    @CrossOrigin
     @PostMapping("/registration")
     public Registration_Master registrationMaster(@RequestBody RegistrationBean registrationBean) {
         Registration_Master registration_master = new Registration_Master();
@@ -61,7 +63,7 @@ public class Controller {
         registration_master.setUserId(registrationBean.getUserId());
         return registrationRepository.save(registration_master);
     }
-
+    @CrossOrigin
     @PostMapping("/login")
     public LoginCredentials login(@RequestBody LoginCredentials loginCredentailsBean) {
         LoginCredentials credentailsResponse = new LoginCredentials();
@@ -77,7 +79,7 @@ public class Controller {
         }
         return credentailsResponse;
     }
-
+    @CrossOrigin
     @PostMapping("/referSchool")
     public String referSchool(@RequestBody ReferSchool referSchool){
         School_Refer school_refer = entityMapper.mapToSchoolReferEntity(referSchool);
@@ -87,7 +89,7 @@ public class Controller {
         schoolReferRepository.save(school_refer);
         return "Thanks for registering with us....ReferalId :" + school_refer.getReferralId();
     }
-
+    @CrossOrigin
     @PostMapping("/childRegistration")
     public String childRegistration(@RequestBody ChildRegistration childRegistration){
         Child_Registration child_registration = new Child_Registration();
