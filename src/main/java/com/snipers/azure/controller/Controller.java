@@ -7,11 +7,15 @@ import com.snipers.azure.beans.ChildRegistration;
 import com.snipers.azure.beans.LoginCredentials;
 import com.snipers.azure.beans.ReferSchool;
 import com.snipers.azure.beans.RegistrationBean;
+import com.snipers.azure.beans.SchoolRegistration;
+import com.snipers.azure.beans.SignUp;
 import com.snipers.azure.mapper.EntityMapper;
 import com.snipers.azure.model.Child_Registration;
 import com.snipers.azure.model.Login_Credentials;
 import com.snipers.azure.model.Registration_Master;
 import com.snipers.azure.model.School_Refer;
+import com.snipers.azure.model.School_Registration;
+import com.snipers.azure.model.Sign_Up;
 import com.snipers.azure.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -104,6 +108,36 @@ public class Controller {
         child_registration.setTypeOfHelp(childRegistration.getTypeOfHelp());
         childRegistrationRepository.save(child_registration);
         return "child registered successFully";
+    }
+    @CrossOrigin
+    @PostMapping("/registerSchool")
+    public String schoolRegistration(@RequestBody SchoolRegistration schoolRegistration) {
+        School_Registration school_registration = entityMapper.mapToSchoolRegistrationEntity(schoolRegistration);
+
+        Login_Credentials loginCredentials = new Login_Credentials();
+        loginCredentials.setUserId(schoolRegistration.getUserId());
+        loginCredentials.setUserType("School");
+
+        Base64.Encoder encoder = Base64.getEncoder();
+        String encodedPassword = encoder.encodeToString(schoolRegistration.getPassword()
+                .getBytes(StandardCharsets.UTF_8));
+        loginCredentials.setUserPassword(encodedPassword);
+
+        loginRepository.save(loginCredentials);
+
+        schoolRegistrationRepository.save(school_registration);
+
+        return "Success";
+    }
+    @CrossOrigin
+    @PostMapping("/signUp")
+    public String signUpFunction(@RequestBody SignUp signUp){
+        Sign_Up sign_up = entityMapper.mapToSignUpEntity(signUp);
+        sign_up.setRegistrationId(uniqueId());
+
+        signUpRepository.save(sign_up);
+
+        return "Success";
     }
 
     private void sendMail(School_Refer referSchool){

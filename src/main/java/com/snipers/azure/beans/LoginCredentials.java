@@ -1,5 +1,8 @@
 package com.snipers.azure.beans;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class LoginCredentials {
 
     private String userId;
