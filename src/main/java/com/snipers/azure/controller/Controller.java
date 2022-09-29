@@ -3,27 +3,14 @@ package com.snipers.azure.controller;
 import com.azure.communication.email.EmailClient;
 import com.azure.communication.email.EmailClientBuilder;
 import com.azure.communication.email.models.*;
-import com.snipers.azure.beans.ChildRegistration;
-import com.snipers.azure.beans.LoginCredentials;
-import com.snipers.azure.beans.ReferSchool;
-import com.snipers.azure.beans.RegistrationBean;
-import com.snipers.azure.beans.SchoolRegistration;
-import com.snipers.azure.beans.SignUp;
+import com.snipers.azure.beans.*;
 import com.snipers.azure.mapper.EntityMapper;
-import com.snipers.azure.model.Child_Registration;
-import com.snipers.azure.model.Login_Credentials;
-import com.snipers.azure.model.Registration_Master;
-import com.snipers.azure.model.School_Refer;
-import com.snipers.azure.model.School_Registration;
-import com.snipers.azure.model.Sign_Up;
+import com.snipers.azure.model.*;
 import com.snipers.azure.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.nio.charset.StandardCharsets;
@@ -87,12 +74,32 @@ public class Controller {
     @PostMapping("/referSchool")
     public String referSchool(@RequestBody ReferSchool referSchool){
         School_Refer school_refer = entityMapper.mapToSchoolReferEntity(referSchool);
-
         school_refer.setReferralId(uniqueId());
-        sendMail(school_refer);
+        String subject = "Woooh you have been referred..!!!";
         schoolReferRepository.save(school_refer);
+        EmailContent emailContent = new EmailContent(subject)
+                .setPlainText("This is plain mail send test body\n Best Wishes!!")
+                .setHtml("<html><body><h1>Looking forward to hear from you</h1><br/><p>click on the below to register with us</p><br/><a href=\"https://start-young-app.azurewebsites.net\">Visit Smart Youth Uk Registration Page</a></body></html>");
+        List<EmailAddress> emailAddress = new ArrayList<EmailAddress>() {
+            {
+                add(new EmailAddress(referSchool.getSchoolEmail()));
+            }
+        };
+        sendMail(emailAddress,emailContent);
+
+        String subjectRef = "Thanks for your reference..!!!";
+        EmailContent emailContentRef = new EmailContent(subjectRef)
+                .setPlainText("This is plain mail send test body\n Best Wishes!!")
+                .setHtml("<html><body><h1>Thanks for your valuable referral</h1><br/><p>more to goo.......</p></body></html>");
+        List<EmailAddress> emailAddressRef = new ArrayList<EmailAddress>() {
+            {
+                add(new EmailAddress(referSchool.getEmail()));
+            }
+        };
+        sendMail(emailAddressRef,emailContentRef);
         return "Thanks for registering with us....ReferalId :" + school_refer.getReferralId();
     }
+
     @CrossOrigin
     @PostMapping("/childRegistration")
     public String childRegistration(@RequestBody ChildRegistration childRegistration){
@@ -107,59 +114,86 @@ public class Controller {
         child_registration.setPhone(childRegistration.getPhone());
         child_registration.setTypeOfHelp(childRegistration.getTypeOfHelp());
         childRegistrationRepository.save(child_registration);
+        String subjectRef = "Thanks for your registration..!!!";
+        EmailContent emailContentRef = new EmailContent(subjectRef)
+                .setPlainText("This is plain mail send test body\n Best Wishes!!")
+                .setHtml("<html><body><h1>Will get in touch soon</h1></body></html>");
+        List<EmailAddress> emailAddressRef = new ArrayList<EmailAddress>() {
+            {
+                add(new EmailAddress(childRegistration.getEmail()));
+            }
+        };
+        sendMail(emailAddressRef,emailContentRef);
         return "child registered successFully";
     }
     @CrossOrigin
     @PostMapping("/registerSchool")
-    public String schoolRegistration(@RequestBody SchoolRegistration schoolRegistration) {
+    public String schoolRegistration(@RequestBody SchoolRegistration schoolRegistration) throws Exception {
         School_Registration school_registration = entityMapper.mapToSchoolRegistrationEntity(schoolRegistration);
-
+        boolean isUserIdPresent = loginRepository.findById(schoolRegistration.getUserId()).isPresent();
+        if (isUserIdPresent) throw new Exception("User already exists");
         Login_Credentials loginCredentials = new Login_Credentials();
         loginCredentials.setUserId(schoolRegistration.getUserId());
         loginCredentials.setUserType("School");
-
         Base64.Encoder encoder = Base64.getEncoder();
         String encodedPassword = encoder.encodeToString(schoolRegistration.getPassword()
                 .getBytes(StandardCharsets.UTF_8));
         loginCredentials.setUserPassword(encodedPassword);
-
         loginRepository.save(loginCredentials);
-
         schoolRegistrationRepository.save(school_registration);
-
+        String subjectRef = "Thanks for your registration..!!!";
+        EmailContent emailContentRef = new EmailContent(subjectRef)
+                .setPlainText("This is plain mail send test body\n Best Wishes!!")
+                .setHtml("<html><body><h1>Welcome Onboard</h1></body></html>");
+        List<EmailAddress> emailAddressRef = new ArrayList<EmailAddress>() {
+            {
+                add(new EmailAddress(schoolRegistration.getSchoolEmail()));
+            }
+        };
+        sendMail(emailAddressRef,emailContentRef);
         return "Success";
     }
+
+    @CrossOrigin
+    @RequestMapping("/schoolList")
+    public List<School_Registration> fetchReferredSchoolRecord(){
+        List<School_Registration> schoolsList =  schoolRegistrationRepository.findAll();
+        return schoolsList;
+    }
+
+
+
     @CrossOrigin
     @PostMapping("/signUp")
     public String signUpFunction(@RequestBody SignUp signUp){
         Sign_Up sign_up = entityMapper.mapToSignUpEntity(signUp);
         sign_up.setRegistrationId(uniqueId());
-
         signUpRepository.save(sign_up);
+        String subject = "Smart Youth Uk Welcomes You !!!";
+        EmailContent emailContent = new EmailContent(subject)
+                .setPlainText("This is plain mail send test body\n Best Wishes!!")
+                .setHtml("<html><body><h1>Thanks for registering with us</h1><br/><p>Looking forward to work with you!!</p></body></html>");
+
+        List<EmailAddress> emailAddress = new ArrayList<EmailAddress>() {
+            {
+                add(new EmailAddress(signUp.getEmail()));
+            }
+        };
+
+        sendMail(emailAddress,emailContent);
 
         return "Success";
     }
 
-    private void sendMail(School_Refer referSchool){
+    private void sendMail(List<EmailAddress> emailAddresses,EmailContent emailContent){
         String connectionString = "endpoint=https://codefest-communication-service.communication.azure.com/;accesskey=uNhIrqaD/ukokOcZBhuTNezDYey8vpa+N8PvXX7qhhH5pZVX1PUwJIxwH32UOLoXhmuAjayfhIndgMmOIZuVWw==";
 
         EmailClient emailClient = new EmailClientBuilder().connectionString(connectionString).buildClient();
 
-        String subject = "Send email quick start - java";
-
-        EmailContent emailContent = new EmailContent(subject)
-                .setPlainText("This is plain mail send test body \n Best Wishes!!")
-                .setHtml("<html><body><h1>Congrats on being referred</h1><br/><h2>City</h2><h4>Here is your referral Id ::    </h4><p>Happy Learning!!</p></body></html>");
 
         String sender = "StartYoungUK@69590e86-4355-459f-88ee-475db743e7bc.azurecomm.net";
-        List<EmailAddress> emailAddress = new ArrayList<EmailAddress>() {
-            {
-                add(new EmailAddress(referSchool.getSchoolEmail()).setDisplayName("Deeven Successfully"));
-                add(new EmailAddress(referSchool.getEmail()));
-            }
-        };
 
-        EmailRecipients emailRecipients = new EmailRecipients(emailAddress);
+        EmailRecipients emailRecipients = new EmailRecipients(emailAddresses);
 
         EmailMessage emailMessage = new EmailMessage(sender, emailContent)
                 .setRecipients(emailRecipients);
