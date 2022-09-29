@@ -130,16 +130,7 @@ public class Controller {
     @PostMapping("/registerSchool")
     public String schoolRegistration(@RequestBody SchoolRegistration schoolRegistration) throws Exception {
         School_Registration school_registration = entityMapper.mapToSchoolRegistrationEntity(schoolRegistration);
-        boolean isUserIdPresent = loginRepository.findById(schoolRegistration.getUserId()).isPresent();
-        if (isUserIdPresent) throw new Exception("User already exists");
-        Login_Credentials loginCredentials = new Login_Credentials();
-        loginCredentials.setUserId(schoolRegistration.getUserId());
-        loginCredentials.setUserType("School");
-        Base64.Encoder encoder = Base64.getEncoder();
-        String encodedPassword = encoder.encodeToString(schoolRegistration.getPassword()
-                .getBytes(StandardCharsets.UTF_8));
-        loginCredentials.setUserPassword(encodedPassword);
-        loginRepository.save(loginCredentials);
+        school_registration.setUserId(uniqueId());
         schoolRegistrationRepository.save(school_registration);
         String subjectRef = "Thanks for your registration..!!!";
         EmailContent emailContentRef = new EmailContent(subjectRef)
